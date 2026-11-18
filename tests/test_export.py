@@ -101,9 +101,25 @@ class LoadTests(unittest.TestCase):
         self.assertEqual(p.images, [Path("a/c.JPG")])
         self.assertEqual(err.getvalue().strip(), "warning: unsupported image a/b.avif")
 
+    def test_extract_no_posts_returns_1(self):
+        out = self.root / "out"
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            rc = main(["extract", str(self.root), "--from", "2099", "--out", str(out)])
+        self.assertEqual(rc, 1)
+        self.assertIn("no posts match", err.getvalue())
+        self.assertFalse(list(out.glob("book_*")))
+
+    def test_extract_bad_tz_exits_cleanly(self):
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err), self.assertRaises(SystemExit) as c:
+            main(["extract", str(self.root), "--tz", "Europe/Bratislav"])
+        self.assertNotEqual(c.exception.code, 0)
+        self.assertIn("unknown time zone", err.getvalue())
+
     def test_end_to_end(self):
         out = self.root / "out"
-        with contextlib.redirect_stdout(io.StringIO()):
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
             self.assertEqual(main(["extract", str(self.root), "--out", str(out)]), 0)
         run = next(out.iterdir())
         self.assertTrue((run / "book.epub").exists())

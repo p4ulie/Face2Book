@@ -31,7 +31,7 @@ def pick(ask: Callable[[str], str], label: str, count: int, default: bool = Fals
         answer = ask(label).strip()
         if not answer and default:
             return None
-        if answer.isdigit() and 1 <= int(answer) <= count:
+        if answer.isdecimal() and 1 <= int(answer) <= count:
             return int(answer)
         print(f"Enter a number from 1 to {count}.")
 

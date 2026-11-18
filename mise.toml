@@ -1,4 +1,4 @@
 [tools]
 python = "3.15"
-pandoc = "3"
-typst = "0.15"
+pandoc = "3.14"
+typst = "0.15.1"

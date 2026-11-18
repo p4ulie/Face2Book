@@ -36,8 +36,8 @@ PDF and ePub are built without them too.
 
 ## What's in the book / what isn't
 
-In (merged by year):
-- `timeline`: your own posts (text, shared links, photos with captions)
+In (merged by year). No kind is merged into timeline.
+- `timeline`: your own posts (text, photos with captions; shared links only when you wrote text — the link itself isn't printed)
 - `others-timeline`: your posts on other people's pages (this export has none with content)
 - `groups`: your posts in groups
 - `life-events`: life events (this export has only their names)
@@ -48,5 +48,7 @@ Not in the book:
 - your comments on other people's posts
 - photos that only appear in albums, videos, Facebook Notes (`notes.json`)
 - images Typst cannot read (`.avif`), skipped with a warning
+
+Edit `markdown/metadata.yaml` for the book's title and author.
 
 Layout details: `docs/export-layout.md`.

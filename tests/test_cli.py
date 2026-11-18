@@ -1,3 +1,5 @@
+import contextlib
+import io
 import json
 import tempfile
 import unittest
@@ -18,6 +20,9 @@ class CliTest(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
         self.out = Path(self.tmp.name)
+        for cm in (contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO())):
+            cm.__enter__()
+            self.addCleanup(cm.__exit__, None, None, None)
 
     def make_run(self, name, **params):
         run = self.out / name

@@ -60,11 +60,11 @@ def copy_image(rel: Path, export_root: Path, images: Path, taken: dict) -> str |
 
 
 def post_blocks(post: Post, export_root: Path, images: Path, taken: dict) -> list[str]:
+    pics = [n for n in (copy_image(r, export_root, images, taken) for r in post.images) if n]
+    if not post.text and not pics:
+        return []
     blocks = [f"*{post.when:%H:%M}* " + escape_md(post.text)]
-    for rel in post.images:
-        name = copy_image(rel, export_root, images, taken)
-        if name:
-            blocks.append(f"![](../images/{name})")
+    blocks += [f"![](../images/{n})" for n in pics]
     if post.notes:
         paras = []
         for note in post.notes:
@@ -76,21 +76,29 @@ def post_blocks(post: Post, export_root: Path, images: Path, taken: dict) -> lis
 
 def year_markdown(year: int, posts: list[Post], notes: list[TimelineNote],
                   export_root: Path, images: Path, taken: dict) -> str:
-    blocks = [heading(f"# {year}", bool(posts))]
-    months = sorted({x.when.month for x in posts + notes})
-    for month in months:
-        mposts = [p for p in posts if p.when.month == month]
-        blocks.append(heading(f"## {MONTHS[month - 1]} {year}", bool(mposts)))
-        days = sorted({x.when.day for x in posts + notes if x.when.month == month})
-        for day in days:
-            dposts = [p for p in mposts if p.when.day == day]
+    # Headings depend on what is actually written, so build days first.
+    months = []
+    for month in sorted({x.when.month for x in posts + notes}):
+        days = []
+        for day in sorted({x.when.day for x in posts + notes if x.when.month == month}):
+            body = []
+            for p in posts:
+                if (p.when.month, p.when.day) == (month, day):
+                    body += post_blocks(p, export_root, images, taken)
+            has_post = bool(body)
             dnotes = [n for n in notes if (n.when.month, n.when.day) == (month, day)]
-            blocks.append(heading(f"### {day}. {month}. {year}", bool(dposts)))
-            for post in dposts:
-                blocks += post_blocks(post, export_root, images, taken)
             if dnotes:
-                blocks.append(note_div(*(
+                body.append(note_div(*(
                     f"**{escape_md(n.author)}:** {escape_md(n.text)}" for n in dnotes)))
+            if body:
+                days.append((day, has_post, [heading(f"### {day}. {month}. {year}", has_post)] + body))
+        if days:
+            months.append((month, any(d[1] for d in days), days))
+    blocks = [heading(f"# {year}", any(m[1] for m in months))]
+    for month, has_post, days in months:
+        blocks.append(heading(f"## {MONTHS[month - 1]} {year}", has_post))
+        for d in days:
+            blocks += d[2]
     return "\n\n".join(blocks) + "\n"
 
 

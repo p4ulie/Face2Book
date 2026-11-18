@@ -55,6 +55,14 @@ class BuildTest(unittest.TestCase):
                 self.assertNotIn(s, t)
         self.assertTrue((run / "book.pdf").read_bytes().startswith(b"%PDF"))
 
+    def test_empty_markdown_dir_exits(self):
+        self.assertTrue(shutil.which("pandoc") and shutil.which("typst"), "pandoc/typst missing")
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        (Path(tmp.name) / "markdown").mkdir()
+        with self.assertRaises(SystemExit):
+            build(Path(tmp.name))
+
     def test_handles_stay_text(self):
         self.assertTrue(shutil.which("pandoc") and shutil.which("typst"), "pandoc/typst missing")
         tmp = tempfile.TemporaryDirectory()

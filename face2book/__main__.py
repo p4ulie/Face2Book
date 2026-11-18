@@ -3,10 +3,10 @@
 import argparse
 import sys
 from pathlib import Path
-from zoneinfo import ZoneInfo
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from face2book.build import build
-from face2book.export import KINDS, ExportError
+from face2book.export import KINDS, ExportError, load
 from face2book.markdown import write_run
 from face2book.menu import menu
 
@@ -21,6 +21,14 @@ def kinds(value: str) -> list[str]:
     return chosen
 
 
+def tz(value: str) -> str:
+    try:
+        ZoneInfo(value)
+    except (ZoneInfoNotFoundError, ValueError):
+        raise argparse.ArgumentTypeError(f"unknown time zone {value!r}") from None
+    return value
+
+
 def main(argv: list[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else argv
     if not argv:
@@ -30,7 +38,7 @@ def main(argv: list[str] | None = None) -> int:
     ex = sub.add_parser("extract")
     ex.add_argument("export_dir")
     ex.add_argument("--out", default="output")
-    ex.add_argument("--tz", default="Europe/Bratislava")
+    ex.add_argument("--tz", type=tz, default="Europe/Bratislava")
     ex.add_argument("--include", type=kinds, default=list(KINDS))
     ex.add_argument("--from", dest="year_from", type=int)
     ex.add_argument("--to", dest="year_to", type=int)
@@ -43,12 +51,14 @@ def main(argv: list[str] | None = None) -> int:
             return 1
         build(Path(a.run_dir))
         return 0
-    from face2book.export import load
     export_root = Path(a.export_dir).resolve()
     try:
         posts, notes = load(export_root, ZoneInfo(a.tz), set(a.include), a.year_from, a.year_to)
     except ExportError as e:
         print(f"error: {e}", file=sys.stderr)
+        return 1
+    if not posts:
+        print("error: no posts match these options", file=sys.stderr)
         return 1
     params = {"export": str(export_root), "include": a.include,
               "from": a.year_from, "to": a.year_to, "tz": a.tz}

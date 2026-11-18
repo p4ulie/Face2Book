@@ -84,6 +84,16 @@ class MarkdownTest(unittest.TestCase):
         self.assertIn("![](../images/a.jpg)", md)
         self.assertNotIn("gone.jpg", md)
 
+    def test_post_with_only_missing_image_skipped(self):
+        with contextlib.redirect_stderr(io.StringIO()):
+            md = self.run_md([self.post(text="", images=[Path("img/gone.jpg")],
+                                        when=datetime(2009, 3, 14, 13, 0)),
+                              self.post(when=datetime(2009, 4, 2, 9, 0))])
+        self.assertNotIn("*13:00*", md)
+        self.assertNotIn("### 14. 3. 2009", md)
+        self.assertNotIn("marec", md)
+        self.assertIn("*09:00* Ahoj", md)
+
     def test_image_name_clash(self):
         (self.export / "img2").mkdir()
         (self.export / "img2" / "a.jpg").write_bytes(b"other")
