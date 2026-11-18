@@ -108,7 +108,9 @@ def write_run(posts: list[Post], notes: list[TimelineNote], export_root: Path,
                            [n for n in notes if n.when.year == year],
                            export_root, run / "images", taken)
         (run / "markdown" / f"{year}.md").write_text(md, encoding="utf-8")
-    title = f"Facebook {years[0]}–{years[-1]}" if years else "Facebook"
+    title = "Facebook"
+    if years:
+        title += f" {years[0]}" if years[0] == years[-1] else f" {years[0]}–{years[-1]}"
     (run / "markdown" / "metadata.yaml").write_text(
         f'title: {title}\nauthor: ""\nlang: sk\n', encoding="utf-8")
     (run / "params.json").write_text(

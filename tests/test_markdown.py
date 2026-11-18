@@ -105,7 +105,7 @@ class MarkdownTest(unittest.TestCase):
         run = write_run([self.post()], [], self.export, self.out, params)
         self.assertEqual(json.loads((run / "params.json").read_text(encoding="utf-8")), params)
         meta = (run / "markdown" / "metadata.yaml").read_text(encoding="utf-8")
-        self.assertIn("title: Facebook 2009–2009", meta)
+        self.assertIn("title: Facebook 2009\n", meta)
 
 
 if __name__ == "__main__":

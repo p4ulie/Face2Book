@@ -41,9 +41,13 @@ class BuildTest(unittest.TestCase):
         typ = (run / "print/book.typ").read_text(encoding="utf-8")
         self.assertIn("Môj text", typ)
         self.assertIn("a.png", typ)
+        for bad in ("lang: sk", "title: Facebook"):
+            self.assertNotIn(bad, typ)
+        self.assertIn("title: [Facebook 2009]", typ)
         # ponytail: PDF text not checked, it is compiled from the same filtered book.typ.
         with zipfile.ZipFile(run / "book.epub") as z:
             self.assertTrue(any(n.startswith("EPUB/media/") for n in z.namelist()))
+            self.assertIn("<dc:title", z.read("EPUB/content.opf").decode("utf-8"))
             texts = [z.read(n).decode("utf-8") for n in z.namelist() if n.endswith(".xhtml")]
         texts += [typ, (run / "print/book.tex").read_text(encoding="utf-8")]
         for s in SECRETS:
