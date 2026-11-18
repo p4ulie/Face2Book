@@ -65,7 +65,8 @@ The owner picked A.
 
 ```
 face2book/
-  __main__.py     CLI: `python -m face2book extract …` / `build …`
+  __main__.py     CLI: `python -m face2book extract …` / `build …`; no args → menu
+  menu.py         guided prompts, defaults from the last run's params.json
   export.py       read the export → list[Post]; mojibake fix; finds the JSON files
   markdown.py     list[Post] → run folder: markdown/<year>.md, metadata.yaml, images/
   build.py        markdown/ → book.epub, book.pdf, print/book.typ, print/book.tex (calls pandoc)
@@ -164,6 +165,13 @@ python -m face2book extract <export_dir> [--out output/] [--tz Europe/Bratislava
 python -m face2book build <run_dir>
     → rebuilds the finished formats from that run folder's (possibly edited) Markdown
 ```
+
+`python -m face2book` with no arguments starts a guided menu (`menu.py`, stdlib `input()` only).
+It asks for the action (extract a new run, or rebuild an existing run picked from a numbered list),
+the export path, the post kinds (numbered toggles), the year range and the timezone. Every default
+comes from the newest run folder's `params.json`, so Enter keeps last time's choice. It then calls the
+same functions the CLI uses. *(Owner asked for a menu. Plain prompts instead of a full-screen curses
+UI is the builder's call: less code and no dependency.)*
 
 `output/` is git-ignored: it holds personal data.
 
