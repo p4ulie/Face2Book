@@ -9,7 +9,8 @@ from face2book.menu import menu
 
 
 def answers(*a):
-    return iter(a).__next__
+    it = iter(a)
+    return lambda _prompt: next(it)
 
 
 class CliTest(unittest.TestCase):
@@ -25,9 +26,10 @@ class CliTest(unittest.TestCase):
         return run
 
     def test_main_build_calls_build(self):
+        (self.out / "markdown").mkdir()
         with mock.patch("face2book.__main__.build") as b:
-            self.assertEqual(main(["build", "x"]), 0)
-        b.assert_called_once_with(Path("x"))
+            self.assertEqual(main(["build", str(self.out)]), 0)
+        b.assert_called_once_with(self.out)
 
     def test_main_rejects_unknown_kind(self):
         with self.assertRaises(SystemExit):
@@ -42,7 +44,7 @@ class CliTest(unittest.TestCase):
 
     def test_menu_toggle_kind(self):
         self.make_run("book_2026-01-01_1200", export="/data/fb", include=["timeline"])
-        argv = menu(self.out, ask=answers("1", "", "2", "", "", ""))
+        argv = menu(self.out, ask=answers("1", "", "2", "", "", "", ""))
         self.assertEqual(argv[argv.index("--include") + 1], "timeline,others-timeline")
 
     def test_menu_no_previous_run_reasks_export(self):
@@ -55,6 +57,23 @@ class CliTest(unittest.TestCase):
         self.make_run("book_2026-01-01_1200", export="/a")
         newest = self.make_run("book_2026-02-01_1200", export="/a")
         self.assertEqual(menu(self.out, ask=answers("2", "1")), ["build", str(newest)])
+
+    def test_menu_rebuild_reasks_bad_pick(self):
+        run = self.make_run("book_2026-01-01_1200", export="/a")
+        argv = menu(self.out, ask=answers("x", "2", "x", "0", "9", "1"))
+        self.assertEqual(argv, ["build", str(run)])
+
+    def test_menu_refuses_zero_kinds(self):
+        self.make_run("book_2026-01-01_1200", export="/a", include=["timeline"])
+        argv = menu(self.out, ask=answers("1", "", "1", "", "3", "", "", "", ""))
+        self.assertEqual(argv[argv.index("--include") + 1], "groups")
+
+    def test_main_build_missing_dir(self):
+        self.assertEqual(main(["build", str(self.out / "nope")]), 1)
+
+    def test_main_rejects_empty_include(self):
+        with self.assertRaises(SystemExit):
+            main(["extract", "e", "--include", ""])
 
 
 if __name__ == "__main__":

@@ -13,6 +13,8 @@ from face2book.menu import menu
 def kinds(value: str) -> list[str]:
     chosen = [k for k in value.split(",") if k]
     bad = [k for k in chosen if k not in KINDS]
+    if not chosen:
+        raise argparse.ArgumentTypeError("choose at least one kind")
     if bad:
         raise argparse.ArgumentTypeError(f"unknown kind {bad[0]!r}, choose from {', '.join(KINDS)}")
     return chosen
@@ -35,6 +37,9 @@ def main(argv: list[str] | None = None) -> int:
     a = ap.parse_args(argv)
 
     if a.cmd == "build":
+        if not (Path(a.run_dir) / "markdown").is_dir():
+            print(f"error: {a.run_dir} is not a run folder", file=sys.stderr)
+            return 1
         build(Path(a.run_dir))
         return 0
     from face2book.export import load  # ponytail: Task 6 provides it
