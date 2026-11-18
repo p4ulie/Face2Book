@@ -18,7 +18,7 @@ def build(run_dir: Path) -> None:
     md = run_dir / "markdown"
     (run_dir / "print").mkdir(exist_ok=True)
     sources = sorted(p.name for p in md.glob("*.md"))
-    common = ["pandoc", *sources, "--metadata-file=metadata.yaml", "--lua-filter", str(FILTER), "--resource-path", "."]
+    common = ["pandoc", *sources, "--metadata-file=metadata.yaml", "-f", "markdown-citations", "--lua-filter", str(FILTER), "--resource-path", "."]
     calls = [
         ["-o", "../book.epub"],
         ["-t", "typst", "-s", "-o", "../print/book.typ"],

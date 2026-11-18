@@ -54,3 +54,15 @@ class BuildTest(unittest.TestCase):
             for t in texts:
                 self.assertNotIn(s, t)
         self.assertTrue((run / "book.pdf").read_bytes().startswith(b"%PDF"))
+
+    def test_handles_stay_text(self):
+        self.assertTrue(shutil.which("pandoc") and shutil.which("typst"), "pandoc/typst missing")
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        post = Post(datetime(2009, 3, 14, 18, 42), "Ahoj @jana_test a [@x] a a@b.sk", [], "timeline", [])
+        run = write_run([post], [], Path(tmp.name), Path(tmp.name) / "out", {})
+        build(run)
+        self.assertTrue((run / "book.pdf").is_file())
+        typ = (run / "print/book.typ").read_text(encoding="utf-8")
+        self.assertIn("@jana", typ)
+        self.assertNotIn("#cite", typ)
