@@ -3,6 +3,7 @@
 import argparse
 import sys
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 from face2book.build import build
 from face2book.export import KINDS, ExportError
@@ -42,10 +43,10 @@ def main(argv: list[str] | None = None) -> int:
             return 1
         build(Path(a.run_dir))
         return 0
-    from face2book.export import load  # ponytail: Task 6 provides it
+    from face2book.export import load
     export_root = Path(a.export_dir).resolve()
     try:
-        posts, notes = load(export_root, a.tz, a.include, a.year_from, a.year_to)
+        posts, notes = load(export_root, ZoneInfo(a.tz), set(a.include), a.year_from, a.year_to)
     except ExportError as e:
         print(f"error: {e}", file=sys.stderr)
         return 1
