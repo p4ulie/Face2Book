@@ -91,15 +91,16 @@ class LoadTests(unittest.TestCase):
         f = self.root / fx.POSTS_FILE
         data = json.loads(f.read_text())
         data.append({"timestamp": fx.ts(7, 1), "title": "x", "data": [{"post": "Hi"}],
-                     "attachments": [{"data": [{"media": fx.media("a/b.avif", 1)},
+                     "attachments": [{"data": [{"media": fx.media("a/b.tiff", 1)},
+                                               {"media": fx.media("a/d.avif", 1)},
                                                {"media": fx.media("a/c.JPG", 1)}]}]})
         f.write_text(json.dumps(data))
         err = io.StringIO()
         with contextlib.redirect_stderr(err):
             posts, _ = self.load({"timeline"})
         p = next(p for p in posts if p.text == "Hi")
-        self.assertEqual(p.images, [Path("a/c.JPG")])
-        self.assertEqual(err.getvalue().strip(), "warning: unsupported image a/b.avif")
+        self.assertEqual(p.images, [Path("a/d.avif"), Path("a/c.JPG")])
+        self.assertEqual(err.getvalue().strip(), "warning: unsupported image a/b.tiff")
 
     def test_extract_no_posts_returns_1(self):
         out = self.root / "out"

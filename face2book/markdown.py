@@ -3,11 +3,12 @@
 import json
 import re
 import shutil
+import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
 
-from face2book.export import Post, TimelineNote
+from face2book.export import CONVERT_EXT, Post, TimelineNote
 
 MONTHS = ["január", "február", "marec", "apríl", "máj", "jún", "júl",
           "august", "september", "október", "november", "december"]
@@ -49,13 +50,23 @@ def copy_image(rel: Path, export_root: Path, images: Path, taken: dict) -> str |
     if not src.is_file():
         print(f"warning: missing image {src}", file=sys.stderr)
         return None
-    name, n = src.name, 2
+    convert = src.suffix.lower() in CONVERT_EXT
+    suffix = ".jpg" if convert else src.suffix
+    name, n = src.stem + suffix, 2
     while taken.get(name, src) != src:
-        name = f"{src.stem}-{n}{src.suffix}"
+        name = f"{src.stem}-{n}{suffix}"
         n += 1
     if name not in taken:
+        if convert:
+            try:
+                subprocess.run(["magick", str(src), str(images / name)], check=True,
+                               stdin=subprocess.DEVNULL, capture_output=True)
+            except (OSError, subprocess.CalledProcessError):
+                print(f"warning: cannot convert image {src} (needs ImageMagick)", file=sys.stderr)
+                return None
+        else:
+            shutil.copy2(src, images / name)
         taken[name] = src
-        shutil.copy2(src, images / name)
     return name
 
 

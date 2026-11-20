@@ -55,6 +55,7 @@ WALL_FILE = f"{POSTS_DIR}/other_people's_posts_to_your_timeline.json"
 GROUPS_FILE = "your_facebook_activity/groups/group_posts_and_comments.json"
 LIFE_FILE = "personal_information/profile_information/your_experiences.json"
 IMAGE_EXT = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
+CONVERT_EXT = {".avif", ".heic", ".heif"}  # Typst can't load these; markdown.py converts to JPEG
 VIDEO_EXT = {".mp4", ".mov", ".webm"}
 
 
@@ -64,11 +65,12 @@ def _read(root: Path, rel: str):
 
 
 def _images(uris: list[str]) -> list[Path]:
-    # Typst loads only IMAGE_EXT; videos drop silently, anything else with a warning.
+    # Typst loads only IMAGE_EXT (CONVERT_EXT is converted later); videos drop silently,
+    # anything else with a warning.
     keep = []
     for uri in uris:
         ext = Path(uri).suffix.lower()
-        if ext in IMAGE_EXT:
+        if ext in IMAGE_EXT | CONVERT_EXT:
             keep.append(Path(uri))
         elif ext not in VIDEO_EXT:
             print(f"warning: unsupported image {uri}", file=sys.stderr)

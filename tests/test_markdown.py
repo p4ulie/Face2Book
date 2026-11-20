@@ -1,6 +1,8 @@
 import contextlib
 import io
 import json
+import shutil
+import subprocess
 import tempfile
 import unittest
 from datetime import datetime
@@ -100,6 +102,24 @@ class MarkdownTest(unittest.TestCase):
         run = write_run([self.post(images=[Path("img/a.jpg"), Path("img2/a.jpg")])],
                         [], self.export, self.out, {})
         self.assertTrue((run / "images" / "a-2.jpg").exists())
+
+    def test_avif_converted_to_jpg(self):
+        if not shutil.which("magick"):
+            self.skipTest("ImageMagick not installed")
+        subprocess.run(["magick", "-size", "4x4", "xc:red", str(self.export / "img" / "p.avif")],
+                       check=True)
+        md = self.run_md([self.post(images=[Path("img/p.avif")])])
+        self.assertIn("![](../images/p.jpg)", md)
+        self.assertEqual((self.out.glob("*/images/p.jpg").__next__()).read_bytes()[:2], b"\xff\xd8")
+
+    def test_convert_failure_warns_and_skips(self):
+        (self.export / "img" / "bad.avif").write_bytes(b"not an image")
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err), \
+                mock.patch("subprocess.run", side_effect=FileNotFoundError):
+            md = self.run_md([self.post(images=[Path("img/bad.avif")])])
+        self.assertIn("warning: cannot convert image", err.getvalue())
+        self.assertNotIn("bad", md)
 
     def test_run_folder_collision(self):
         fixed = datetime(2026, 1, 2, 3, 4)
