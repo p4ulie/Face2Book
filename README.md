@@ -4,6 +4,19 @@ Turns a Facebook "Download Your Information" export (JSON format) into a book:
 a Markdown master copy, plus PDF, ePub and print sources (`.typ`, `.tex`).
 Python standard library only; pandoc and typst do the conversion.
 
+## Getting the export
+
+1. Open https://accountscenter.facebook.com/info_and_permissions/dyi/ (or https://www.facebook.com/dyi).
+   Menu path, if the link redirects: Settings & privacy > Settings > Accounts Center >
+   Your information and permissions > Download your information.
+2. Choose "Export your information", select your profile, then "Customize information"
+   and tick Posts (add Groups and Profile information for group posts and life events).
+3. Set the date range to "All time", the format to **JSON**, and media quality to High.
+4. Create the export. Facebook emails you when it is ready (minutes to hours);
+   download the zip from the same page.
+5. Unpack the zip into its own folder, e.g. `~/Documents/facebook-export`, and pass that
+   folder to `extract`. The export link expires after a few days.
+
 ## Setup
 
     mise install        # python, pandoc, typst (see mise.toml)
@@ -47,7 +60,7 @@ Not in the book:
   so there are no notes)
 - your comments on other people's posts
 - photos that only appear in albums, videos, Facebook Notes (`notes.json`)
-- images Typst cannot read (`.avif`), skipped with a warning
+- images other than jpg, png, gif, webp, avif, heic (skipped with a warning); avif and heic are converted to jpg with ImageMagick (`magick`)
 
 Edit `markdown/metadata.yaml` for the book's title and author.
 
