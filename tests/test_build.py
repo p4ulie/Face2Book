@@ -44,6 +44,8 @@ class BuildTest(unittest.TestCase):
         for bad in ("lang: sk", "title: Facebook"):
             self.assertNotIn(bad, typ)
         self.assertIn("title: [Facebook 2009]", typ)
+        self.assertIn('#set image(fit: "contain")', typ)
+        self.assertIn("height: 60.0%", typ)
         # ponytail: PDF text not checked, it is compiled from the same filtered book.typ.
         with zipfile.ZipFile(run / "book.epub") as z:
             self.assertTrue(any(n.startswith("EPUB/media/") for n in z.namelist()))

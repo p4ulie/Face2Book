@@ -10,6 +10,7 @@ MISE = Path(__file__).resolve().parent.parent / "mise.toml"
 # mise shims only resolve inside the repo; point them at the repo's tool versions from any cwd.
 ENV = {**os.environ, "MISE_GLOBAL_CONFIG_FILE": str(MISE)}
 FILTER = Path(__file__).with_name("drop_notes.lua").resolve()
+FIT = Path(__file__).with_name("fit_images.lua").resolve()
 
 
 def build(run_dir: Path) -> None:
@@ -24,7 +25,7 @@ def build(run_dir: Path) -> None:
     common = ["pandoc", *sources, "--metadata-file=metadata.yaml", "-f", "markdown-citations", "--lua-filter", str(FILTER), "--resource-path", "."]
     calls = [
         ["-o", "../book.epub"],
-        ["-t", "typst", "-s", "-o", "../print/book.typ"],
+        ["-t", "typst", "-s", "--lua-filter", str(FIT), "-o", "../print/book.typ"],
         ["-t", "latex", "-s", "-o", "../print/book.tex"],
     ]
     steps = [(common + extra, md, extra[-1]) for extra in calls]
