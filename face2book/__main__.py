@@ -29,6 +29,18 @@ def tz(value: str) -> str:
     return value
 
 
+def summary(posts, notes, include) -> str:
+    rows = [f"{'kind':<16}{'posts':>7}{'images':>8}"]
+    for kind in KINDS:
+        if kind in include:
+            mine = [p for p in posts if p.kind == kind]
+            rows.append(f"{kind:<16}{len(mine):>7}{sum(len(p.images) for p in mine):>8}")
+    rows.append(f"{'timeline notes':<16}{len(notes):>7}")
+    dates = [x.when for x in posts + notes]
+    rows.append(f"oldest {min(dates):%Y-%m-%d}   newest {max(dates):%Y-%m-%d}")
+    return "\n".join(rows)
+
+
 def main(argv: list[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else argv
     if not argv:
@@ -60,6 +72,7 @@ def main(argv: list[str] | None = None) -> int:
     if not posts:
         print("error: no posts match these options", file=sys.stderr)
         return 1
+    print(summary(posts, notes, a.include))
     params = {"export": str(export_root), "include": a.include,
               "from": a.year_from, "to": a.year_to, "tz": a.tz}
     run = write_run(posts, notes, export_root, Path(a.out), params)

@@ -126,8 +126,11 @@ class LoadTests(unittest.TestCase):
 
     def test_end_to_end(self):
         out = self.root / "out"
-        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+        shown = io.StringIO()
+        with contextlib.redirect_stdout(shown), contextlib.redirect_stderr(io.StringIO()):
             self.assertEqual(main(["extract", str(self.root), "--out", str(out)]), 0)
+        self.assertRegex(shown.getvalue(), r"timeline\s+\d+\s+\d+\n")
+        self.assertRegex(shown.getvalue(), r"oldest \d{4}-\d{2}-\d{2}   newest \d{4}-\d{2}-\d{2}")
         run = next(out.iterdir())
         self.assertTrue((run / "book.epub").exists())
         self.assertNotIn(fx.FRIEND_WALL_TEXT, (run / "print" / "book.typ").read_text())
