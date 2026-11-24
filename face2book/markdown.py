@@ -82,7 +82,8 @@ def post_blocks(post: Post, export_root: Path, images: Path, taken: dict) -> lis
             author, sep, text = note.partition(": ")
             paras.append(f"**{escape_md(author)}:** {escape_md(text)}" if sep else escape_md(note))
         blocks.append(note_div(*paras))
-    return blocks
+    # One post = one div, so the print filter keeps its text and photos on the same page.
+    return [":::: post\n" + "\n\n".join(blocks) + "\n::::"]
 
 
 def year_markdown(year: int, posts: list[Post], notes: list[TimelineNote],

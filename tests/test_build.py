@@ -47,6 +47,7 @@ class BuildTest(unittest.TestCase):
             self.assertNotIn(bad, typ)
         self.assertIn("title: [Facebook 2009]", typ)
         self.assertIn('#set image(fit: "contain")', typ)
+        self.assertIn("#block(breakable: false)[", typ)
         self.assertIn("height: 60.0%", typ)
         # ponytail: PDF text not checked, it is compiled from the same filtered book.typ.
         with zipfile.ZipFile(run / "book.epub") as z:

@@ -46,7 +46,7 @@ class MarkdownTest(unittest.TestCase):
     def test_note_with_fence_is_escaped(self):
         md = self.run_md([self.post(notes=["Jana: :::\nleak"])],
                          [TimelineNote(datetime(2009, 3, 14, 20, 0), "Eva", ":::")])
-        fences = [l for l in md.splitlines() if l.startswith(":::")]
+        fences = [l for l in md.splitlines() if l.startswith(":::") and not l.startswith("::::")]
         self.assertEqual(len(fences), 2 * 2)
 
     def test_note_only_day_heading_inside_note(self):
