@@ -6,7 +6,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from face2book.build import build
-from face2book.export import KINDS, ExportError, load
+from face2book.export import KINDS, ExportError, load, parse_years
 from face2book.markdown import write_run
 from face2book.menu import menu
 
@@ -41,6 +41,25 @@ def summary(posts, notes, include) -> str:
     return "\n".join(rows)
 
 
+def extract_books(a, export_root: Path) -> int:
+    for part, (first, last) in enumerate(a.books, 1):
+        try:
+            posts, notes = load(export_root, ZoneInfo(a.tz), set(a.include), first, last)
+        except ExportError as e:
+            print(f"error: {e}", file=sys.stderr)
+            return 1
+        if not posts:
+            print(f"part {part} ({first}-{last}): no posts, skipped")
+            continue
+        print(summary(posts, notes, a.include))
+        params = {"export": str(export_root), "include": a.include, "from": first, "to": last,
+                  "tz": a.tz, "part": part, "of": len(a.books), "years": [first, last]}
+        run = write_run(posts, notes, export_root, Path(a.out), params)
+        print(run)
+        build(run)
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else argv
     if not argv:
@@ -54,6 +73,7 @@ def main(argv: list[str] | None = None) -> int:
     ex.add_argument("--include", type=kinds, default=list(KINDS))
     ex.add_argument("--from", dest="year_from", type=int)
     ex.add_argument("--to", dest="year_to", type=int)
+    ex.add_argument("--books", type=parse_years)
     sub.add_parser("build").add_argument("run_dir")
     a = ap.parse_args(argv)
 
@@ -64,6 +84,8 @@ def main(argv: list[str] | None = None) -> int:
         build(Path(a.run_dir))
         return 0
     export_root = Path(a.export_dir).resolve()
+    if a.books:
+        return extract_books(a, export_root)
     try:
         posts, notes = load(export_root, ZoneInfo(a.tz), set(a.include), a.year_from, a.year_to)
     except ExportError as e:

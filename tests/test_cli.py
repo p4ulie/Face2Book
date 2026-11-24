@@ -8,6 +8,7 @@ from unittest import mock
 
 from face2book.__main__ import main
 from face2book.menu import menu
+from tests import fixture
 
 
 def answers(*a):
@@ -29,6 +30,18 @@ class CliTest(unittest.TestCase):
         run.mkdir()
         (run / "params.json").write_text(json.dumps(params))
         return run
+
+    def test_extract_books_writes_one_run_per_range(self):
+        export = self.out / "export"
+        fixture.make_export(export)
+        runs = self.out / "runs"
+        with mock.patch("face2book.__main__.build"):
+            code = main(["extract", str(export), "--out", str(runs), "--books", "2009-2009,2010-2010"])
+        self.assertEqual(code, 0)
+        parts = sorted((json.loads((r / "params.json").read_text()) for r in runs.iterdir()),
+                       key=lambda p: p["part"])
+        self.assertEqual([(p["part"], p["of"], p["years"]) for p in parts],
+                         [(1, 2, [2009, 2009]), (2, 2, [2010, 2010])])
 
     def test_main_build_calls_build(self):
         (self.out / "markdown").mkdir()

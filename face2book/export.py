@@ -110,6 +110,22 @@ def _life_event(rec: dict, tz: ZoneInfo) -> Post:
     return Post(datetime.fromtimestamp(rec["timestamp"], tz), text, [], "life-events", [])
 
 
+def parse_years(value: str) -> list[tuple[int, int]]:
+    ranges = []
+    for part in value.split(","):
+        a, sep, b = part.partition("-")
+        if not (sep and a.isdecimal() and b.isdecimal()):
+            raise ValueError(f"expected YYYY-YYYY, got {part!r}")
+        if int(a) > int(b):
+            raise ValueError(f"range {part!r} is reversed")
+        ranges.append((int(a), int(b)))
+    ordered = sorted(ranges)
+    for (_, end), (start, _) in zip(ordered, ordered[1:]):
+        if start <= end:
+            raise ValueError("year ranges overlap")
+    return ranges
+
+
 def load(export_root: Path, tz: ZoneInfo, include: set[str],
          year_from: int | None, year_to: int | None) -> tuple[list[Post], list[TimelineNote]]:
     root = Path(export_root)

@@ -1,6 +1,17 @@
 import unittest
 
-from face2book.export import fix_strings, fix_text
+from face2book.export import fix_strings, fix_text, parse_years
+
+
+class ParseYearsTests(unittest.TestCase):
+    def test_ranges(self):
+        self.assertEqual(parse_years("2008-2012,2013-2026"), [(2008, 2012), (2013, 2026)])
+        self.assertEqual(parse_years("2010-2010"), [(2010, 2010)])
+
+    def test_bad_input_raises(self):
+        for bad in ("2012-2008", "2008-2012,2012-2014", "2008", "a-b", "", "2008-2012,"):
+            with self.subTest(bad=bad), self.assertRaises(ValueError):
+                parse_years(bad)
 
 
 class FixTextTests(unittest.TestCase):
