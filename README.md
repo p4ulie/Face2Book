@@ -36,6 +36,18 @@ Each extract creates `output/book_YYYY-MM-DD_HHMM[_N]/`:
     book.pdf  book.epub
     print/book.typ  print/book.tex
 
+## Books, cover, title page
+
+Extra `extract` options:
+
+- `--books 2008-2012,2013-2026`: year ranges, one run folder per range; each cover shows Part N.
+- `--cover none|text|image`: cover page of the book (default `none`).
+- `--cover-image FILE`: your own image for `--cover image` (.avif/.heic are converted to jpg).
+- `--title-page`: add a title page.
+
+Limits: a text cover is not shown in the ePub; the ePub gets a cover only from `--cover-image`.
+The LaTeX (`.tex`) output has no cover or title page (raw Typst blocks are skipped there).
+
 ## Editing
 
 Edit the files in `markdown/`, then run `build <run_dir>` to regenerate every format.

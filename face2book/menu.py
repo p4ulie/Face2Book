@@ -6,6 +6,8 @@ from typing import Callable
 
 from face2book.export import KINDS
 
+COVERS = ("none", "text", "image")
+
 
 def runs(out_root: Path) -> list[Path]:
     # names are timestamps, so name order is time order
@@ -67,4 +69,20 @@ def menu(out_root: Path, ask: Callable[[str], str] = input) -> list[str]:
         if year:
             argv += [flag, year]
     tz = ask_default(ask, "Timezone", p.get("tz", "Europe/Bratislava"))
+    years = p.get("years")
+    books = ask_default(ask, "Books as year ranges, e.g. 2008-2012,2013-2026 (empty for one)",
+                        f"{years[0]}-{years[1]}" if years else "")
+    if books:
+        argv += ["--books", books]
+    cover = ""
+    while cover not in COVERS:
+        cover = ask_default(ask, "Cover (none/text/image)", p.get("cover", "none"))
+    argv += ["--cover", cover]
+    if cover == "image":
+        image = ""
+        while not image:
+            image = ask_default(ask, "Cover image file", "")
+        argv += ["--cover-image", image]
+    if ask_default(ask, "Title page (y/n)", "y" if p.get("title_page") else "n").lower().startswith("y"):
+        argv.append("--title-page")
     return argv + ["--tz", tz, "--out", str(out_root)]

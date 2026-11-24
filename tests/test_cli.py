@@ -67,17 +67,17 @@ class CliTest(unittest.TestCase):
     def test_menu_defaults_from_last_params(self):
         self.make_run("book_2026-01-01_1200", export="/data/fb", include=["timeline"],
                       **{"from": 2010, "to": None, "tz": "Europe/Bratislava"})
-        argv = menu(self.out, ask=answers("1", "", "", "", "", ""))
+        argv = menu(self.out, ask=answers("1", "", "", "", "", "", "", "", ""))
         self.assertEqual(argv, ["extract", "/data/fb", "--include", "timeline", "--from", "2010",
-                                "--tz", "Europe/Bratislava", "--out", str(self.out)])
+                                "--cover", "none", "--tz", "Europe/Bratislava", "--out", str(self.out)])
 
     def test_menu_toggle_kind(self):
         self.make_run("book_2026-01-01_1200", export="/data/fb", include=["timeline"])
-        argv = menu(self.out, ask=answers("1", "", "2", "", "", "", ""))
+        argv = menu(self.out, ask=answers("1", "", "2", "", "", "", "", "", "", ""))
         self.assertEqual(argv[argv.index("--include") + 1], "timeline,others-timeline")
 
     def test_menu_no_previous_run_reasks_export(self):
-        argv = menu(self.out, ask=answers("1", "", "/e", "", "", "", ""))
+        argv = menu(self.out, ask=answers("1", "", "/e", "", "", "", "", "", "", ""))
         self.assertEqual(argv[1], "/e")
         self.assertEqual(argv[argv.index("--include") + 1],
                          "timeline,others-timeline,groups,life-events")
@@ -94,8 +94,25 @@ class CliTest(unittest.TestCase):
 
     def test_menu_refuses_zero_kinds(self):
         self.make_run("book_2026-01-01_1200", export="/a", include=["timeline"])
-        argv = menu(self.out, ask=answers("1", "", "1", "", "3", "", "", "", ""))
+        argv = menu(self.out, ask=answers("1", "", "1", "", "3", "", "", "", "", "", "", ""))
         self.assertEqual(argv[argv.index("--include") + 1], "groups")
+
+    def test_menu_books_cover_title_page(self):
+        argv = menu(self.out, ask=answers("1", "/e", "", "", "", "", "2008-2012,2013-2026", "image",
+                                          "/c.jpg", "y"))
+        self.assertEqual(argv[argv.index("--books"):], [
+            "--books", "2008-2012,2013-2026", "--cover", "image", "--cover-image", "/c.jpg",
+            "--title-page", "--tz", "Europe/Bratislava", "--out", str(self.out)])
+
+    def test_menu_cover_defaults_to_none_without_books(self):
+        argv = menu(self.out, ask=answers("1", "/e", "", "", "", "", "", "", ""))
+        self.assertNotIn("--books", argv)
+        self.assertNotIn("--title-page", argv)
+        self.assertEqual(argv[argv.index("--cover") + 1], "none")
+
+    def test_menu_reasks_empty_cover_image(self):
+        argv = menu(self.out, ask=answers("1", "/e", "", "", "", "", "", "image", "", "/c.jpg", ""))
+        self.assertEqual(argv[argv.index("--cover-image") + 1], "/c.jpg")
 
     def test_main_build_missing_dir(self):
         self.assertEqual(main(["build", str(self.out / "nope")]), 1)
