@@ -131,7 +131,8 @@ def load(export_root: Path, tz: ZoneInfo, include: set[str],
     if "groups" in include and (root / GROUPS_FILE).is_file():
         posts += [_timeline_post(r, "groups", tz) for r in _read(root, GROUPS_FILE)["group_posts_v2"]]
     if "life-events" in include and (root / LIFE_FILE).is_file():
-        posts += [_life_event(r, tz) for r in _read(root, LIFE_FILE)]
+        life = _read(root, LIFE_FILE)  # a list, or one bare record in newer exports
+        posts += [_life_event(r, tz) for r in (life if isinstance(life, list) else [life])]
 
     def wanted(when: datetime) -> bool:
         return (year_from is None or when.year >= year_from) and (year_to is None or when.year <= year_to)

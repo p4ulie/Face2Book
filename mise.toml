@@ -2,3 +2,19 @@
 python = "3.15"
 pandoc = "3.14"
 typst = "0.15.1"
+
+[tasks.menu]
+description = "Guided menu: extract a new run or rebuild an old one"
+run = "python -m face2book"
+
+[tasks.extract]
+description = "Extract a run: mise run extract -- <export dir> [--from Y] [--to Y] ..."
+run = 'python -m face2book extract "$@"'
+
+[tasks.build]
+description = "Rebuild PDF/ePub/print from a run: mise run build -- <run dir>"
+run = 'python -m face2book build "$@"'
+
+[tasks.test]
+description = "Run the test suite"
+run = "python -m unittest"

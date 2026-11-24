@@ -82,6 +82,12 @@ class LoadTests(unittest.TestCase):
         posts, _ = self.load({"life-events"})
         self.assertEqual([p.text for p in posts], [fx.LIFE_TITLE])
 
+    def test_load_life_event_single_record(self):
+        f = self.root / "personal_information/profile_information/your_experiences.json"
+        f.write_text(json.dumps(json.loads(f.read_text())[0]))
+        posts, _ = self.load({"life-events"})
+        self.assertEqual([p.text for p in posts], [fx.LIFE_TITLE])
+
     def test_load_wrong_root_raises(self):
         with self.assertRaises(ExportError) as c:
             load(self.root / "subdir", TZ, set(KINDS), None, None)
