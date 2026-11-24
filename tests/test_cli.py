@@ -43,6 +43,17 @@ class CliTest(unittest.TestCase):
         self.assertEqual([(p["part"], p["of"], p["years"]) for p in parts],
                          [(1, 2, [2009, 2009]), (2, 2, [2010, 2010])])
 
+    def test_cover_image_without_file_exits_1(self):
+        export = self.out / "export"
+        fixture.make_export(export)
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err), mock.patch("face2book.__main__.build"):
+            code = main(["extract", str(export), "--out", str(self.out / "runs"), "--cover", "image"])
+            missing = main(["extract", str(export), "--out", str(self.out / "runs"), "--cover", "image",
+                            "--cover-image", str(self.out / "nope.png")])
+        self.assertEqual((code, missing), (1, 1))
+        self.assertEqual(err.getvalue().count("error: "), 2)
+
     def test_main_build_calls_build(self):
         (self.out / "markdown").mkdir()
         with mock.patch("face2book.__main__.build") as b:

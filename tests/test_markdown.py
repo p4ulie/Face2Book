@@ -137,6 +137,36 @@ class MarkdownTest(unittest.TestCase):
         meta = (run / "markdown" / "metadata.yaml").read_text(encoding="utf-8")
         self.assertIn("title: Facebook 2009\n", meta)
 
+    def test_text_cover_and_title_page(self):
+        run = write_run([self.post()], [], self.export, self.out, {},
+                        title="Facebook 2009 · Part 2", cover="text", title_page=True)
+        md = (run / "markdown" / "00-cover.md").read_text(encoding="utf-8")
+        self.assertIn("```{=typst}", md)
+        self.assertEqual(md.count("#page(margin: 0pt, numbering: none, header: none, footer: none)"), 2)
+        self.assertEqual(md.count("Facebook 2009 · Part 2"), 2)
+
+    def test_no_cover_file_by_default(self):
+        run = write_run([self.post()], [], self.export, self.out, {})
+        self.assertFalse((run / "markdown" / "00-cover.md").exists())
+
+    def test_title_page_only_and_escaping(self):
+        run = write_run([self.post()], [], self.export, self.out, {},
+                        title="A #b [c] $d *e* _f_ \\g", title_page=True)
+        md = (run / "markdown" / "00-cover.md").read_text(encoding="utf-8")
+        self.assertEqual(md.count("#page("), 1)
+        self.assertIn("A \\#b \\[c\\] \\$d \\*e\\* \\_f\\_ \\\\g", md)
+
+    def test_cover_image_copied(self):
+        (self.export / "mine.png").write_bytes(b"\x89PNG fake")
+        run = write_run([self.post()], [], self.export, self.out, {}, title="T", cover="image",
+                        cover_image=self.export / "mine.png")
+        self.assertTrue((run / "images" / "cover.png").is_file())
+        md = (run / "markdown" / "00-cover.md").read_text(encoding="utf-8")
+        self.assertIn("../images/cover.png", md)
+        self.assertNotIn(str(self.export), md)
+        params = json.loads((run / "params.json").read_text(encoding="utf-8"))
+        self.assertEqual(params["cover_image"], "cover.png")
+
 
 if __name__ == "__main__":
     unittest.main()

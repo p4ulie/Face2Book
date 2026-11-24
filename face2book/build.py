@@ -1,5 +1,6 @@
 """Build epub, pdf, typst and latex from a run's Markdown, dropping every note."""
 
+import json
 import os
 import shutil
 import subprocess
@@ -23,8 +24,10 @@ def build(run_dir: Path) -> None:
     if not sources:
         raise SystemExit(f"no Markdown files in {md}")
     common = ["pandoc", *sources, "--metadata-file=metadata.yaml", "-f", "markdown-citations", "--lua-filter", str(FILTER), "--resource-path", "."]
+    cover = json.loads((run_dir / "params.json").read_text(encoding="utf-8")).get("cover_image") \
+        if (run_dir / "params.json").is_file() else None
     calls = [
-        ["-o", "../book.epub"],
+        ([f"--epub-cover-image=../images/{cover}"] if cover else []) + ["-o", "../book.epub"],
         ["-t", "typst", "-s", "--lua-filter", str(FIT), "-o", "../print/book.typ"],
         ["-t", "latex", "-s", "-o", "../print/book.tex"],
     ]

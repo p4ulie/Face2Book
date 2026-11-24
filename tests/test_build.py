@@ -34,7 +34,9 @@ class BuildTest(unittest.TestCase):
         post = Post(datetime(2009, 3, 14, 18, 42), "Môj text", [Path("img/a.png")], "timeline",
                     ["Jana: TAJNE_SLOVA", "Peter: :::\nTAJNE_TRETIE"])
         note = TimelineNote(datetime(2009, 3, 16, 9, 0), "Eva", "TAJNE_DRUHE")
-        run = write_run([post], [note], export, Path(tmp.name) / "out", {})
+        (export / "mine.png").write_bytes(png())
+        run = write_run([post], [note], export, Path(tmp.name) / "out", {}, title="Facebook 2009",
+                        cover="image", cover_image=export / "mine.png", title_page=True)
         build(run)
         for f in ("book.epub", "book.pdf", "print/book.typ", "print/book.tex"):
             self.assertTrue((run / f).is_file(), f)
@@ -51,6 +53,8 @@ class BuildTest(unittest.TestCase):
             self.assertTrue(any(n.startswith("EPUB/media/") for n in z.namelist()))
             self.assertIn("<dc:title", z.read("EPUB/content.opf").decode("utf-8"))
             texts = [z.read(n).decode("utf-8") for n in z.namelist() if n.endswith(".xhtml")]
+            self.assertIn("EPUB/text/cover.xhtml", z.namelist())
+        texts.append((run / "markdown/00-cover.md").read_text(encoding="utf-8"))
         texts += [typ, (run / "print/book.tex").read_text(encoding="utf-8")]
         for s in SECRETS:
             for t in texts:

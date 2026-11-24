@@ -113,8 +113,34 @@ def year_markdown(year: int, posts: list[Post], notes: list[TimelineNote],
     return "\n\n".join(blocks) + "\n"
 
 
+def book_title(years: list[int], part: int = 1, of: int = 1) -> str:
+    title = "Facebook"
+    if years:
+        title += f" {years[0]}" if years[0] == years[-1] else f" {years[0]}–{years[-1]}"
+    return title + (f" · Part {part}" if of > 1 else "")
+
+
+def escape_typst(s: str) -> str:
+    return re.sub(r'([#\[\]\\$*_"\'])', r"\\\1", s)
+
+
+PAGE = "#page(margin: 0pt, numbering: none, header: none, footer: none)"
+
+
+def cover_markdown(title: str, cover: str | None, image: str | None, title_page: bool) -> str:
+    pages = []
+    if image:
+        pages.append(f'{PAGE}[#image("../images/{image}", width: 100%, height: 100%, fit: "cover")]')
+    elif cover:
+        pages.append(f"{PAGE}[#align(center + horizon)[#text(size: 36pt, weight: \"bold\")[{escape_typst(title)}]]]")
+    if title_page:
+        pages.append(f"{PAGE}[#align(center + horizon)[#text(size: 24pt)[{escape_typst(title)}]]]")
+    return "```{=typst}\n" + "\n".join(pages) + "\n```\n"
+
+
 def write_run(posts: list[Post], notes: list[TimelineNote], export_root: Path,
-              out_root: Path, params: dict) -> Path:
+              out_root: Path, params: dict, *, title: str | None = None, cover: str | None = None,
+              cover_image: Path | None = None, title_page: bool = False) -> Path:
     run = make_run_folder(out_root)
     (run / "markdown").mkdir()
     (run / "images").mkdir()
@@ -122,14 +148,24 @@ def write_run(posts: list[Post], notes: list[TimelineNote], export_root: Path,
     notes = sorted(notes, key=lambda n: n.when)
     taken: dict = {}
     years = sorted({x.when.year for x in posts + notes})
+    title = title or book_title(years)
+    image = None
+    if cover == "image" and cover_image:
+        image = copy_image(Path(cover_image).resolve(), export_root, run / "images", taken)
+        if image:
+            final = "cover" + Path(image).suffix
+            (run / "images" / image).replace(run / "images" / final)
+            taken[final] = taken.pop(image)
+            image = final
+            params = {**params, "cover_image": image}
+    if image or cover == "text" or title_page:
+        (run / "markdown" / "00-cover.md").write_text(
+            cover_markdown(title, cover, image, title_page), encoding="utf-8")
     for year in years:
         md = year_markdown(year, [p for p in posts if p.when.year == year],
                            [n for n in notes if n.when.year == year],
                            export_root, run / "images", taken)
         (run / "markdown" / f"{year}.md").write_text(md, encoding="utf-8")
-    title = "Facebook"
-    if years:
-        title += f" {years[0]}" if years[0] == years[-1] else f" {years[0]}–{years[-1]}"
     (run / "markdown" / "metadata.yaml").write_text(
         f'title: {title}\nauthor: ""\nlang: sk\n', encoding="utf-8")
     (run / "params.json").write_text(
